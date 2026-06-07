@@ -97,6 +97,33 @@ npm run build
 npm run preview
 ```
 
+### 7. Production Deployment & Security
+
+When deploying your Descartes application to production (e.g., to Vercel, Netlify, or AWS), follow these guidelines to handle environment variables and keep your keys secure.
+
+#### A. Environment Variables in Deployment
+Do **not** commit credentials (like `.env` or `.env.production`) to source control. Instead, set them in your hosting provider's dashboard:
+- **Vercel:** Project Settings > Environment Variables
+- **Netlify:** Site configuration > Environment variables
+- Add both `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as production environment variables.
+
+#### B. Anon Key Security (Is it safe to expose?)
+Yes! In a frontend-only Single Page Application (SPA), Vite embeds environment variables prefixed with `VITE_` directly into the compiled JavaScript bundle. This means anyone inspecting the page can see your `VITE_SUPABASE_ANON_KEY`.
+
+**How security is maintained:**
+- The **Anon Key** is a public key. It is designed to be client-facing.
+- Security in Supabase is enforced on the database level via **Row Level Security (RLS)**, not by hiding the key.
+- As long as you enable RLS on your tables (as shown in Step 4) and define policies (e.g., restricting access to `auth.uid() = user_id`), users cannot access other users' data, even if they have the anon key.
+
+#### C. How to Completely Hide the Anon Key (Optional)
+If your application requirements strictly demand that no keys are visible in the browser, you cannot connect to Supabase directly from the React client. You must implement a **Backend Proxy Server**:
+1. Create a server (e.g., Node.js/Express, Next.js API route, Serverless Function, or Cloudflare Worker).
+2. Store the Supabase URL and Anon Key (or Service Role Key) only in the backend server's environment variables.
+3. Update your React application to make HTTP requests to your backend server instead of using the Supabase client directly.
+4. Your backend server receives the requests, verifies the user session (usually via JWT), executes queries to Supabase, and returns the data to the frontend.
+
+*Note: Using a proxy server adds extra latency, complexity, and maintenance overhead, and disables Supabase's out-of-the-box features like real-time subscriptions.*
+
 ---
 
 ## 📂 Project Structure
