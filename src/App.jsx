@@ -4,7 +4,8 @@ import { supabase } from './lib/supabaseClient';
 import Auth from './components/Auth';
 import FoodTracker from './components/FoodTracker';
 import HistoryPage from './components/HistoryPage';
-import { PlusCircle, List, LogOut } from 'lucide-react';
+import TodoCalendar from './components/TodoCalendar';
+import { PlusCircle, List, LogOut, CheckSquare } from 'lucide-react';
 import './App.css';
 
 function Navigation({ session }) {
@@ -21,6 +22,9 @@ function Navigation({ session }) {
           </Link>
           <Link to="/history" className={`nav-link ${location.pathname === '/history' ? 'active' : ''}`}>
             <List size={18} /> History
+          </Link>
+          <Link to="/todos" className={`nav-link ${location.pathname === '/todos' ? 'active' : ''}`}>
+            <CheckSquare size={18} /> Todos
           </Link>
         </div>
         <div className="nav-user">
@@ -125,6 +129,7 @@ function App() {
             <Routes>
               <Route path="/" element={<FoodTracker onAddEntry={addEntry} />} />
               <Route path="/history" element={<HistoryPage entries={entries} />} />
+              <Route path="/todos" element={<TodoCalendar />} />
             </Routes>
           )}
         </main>
