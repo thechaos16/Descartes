@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Descartes Bookmarker",
+  "version": "1.0",
+  "description": "Save interesting articles and links directly to your Descartes hub.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://sxhqrkhvnoizucpwfbng.supabase.co/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "icons": {
+    "128": "icon.png"
+  }
+}

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Descartes Bookmarker</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-area">
+        <span class="logo-icon">🌌</span>
+        <h1>Descartes</h1>
+      </div>
+      <span class="badge">Bookmarker</span>
+    </header>
+
+    <!-- Content Sections -->
+    <main class="main-content">
+      <!-- Loading View -->
+      <div id="loading-view" class="state-view">
+        <div class="spinner"></div>
+        <p>Connecting to Descartes...</p>
+      </div>
+
+      <!-- Auth Error View -->
+      <div id="auth-view" class="state-view hidden">
+        <div class="icon-warning">⚠️</div>
+        <h3>Authentication Required</h3>
+        <p>You need to be logged in to Descartes to save bookmarks.</p>
+        <button id="btn-login" class="btn-primary">
+          Open Descartes & Login
+        </button>
+      </div>
+
+      <!-- Bookmark Form View -->
+      <div id="form-view" class="state-view hidden">
+        <div class="field-group">
+          <label>Page Title</label>
+          <div id="page-title" class="text-display" contenteditable="true" title="Click to edit title">Loading title...</div>
+        </div>
+
+        <div class="field-group">
+          <label>URL</label>
+          <div id="page-url" class="text-display url-display">Loading URL...</div>
+        </div>
+
+        <!-- Read Toggle -->
+        <div class="toggle-group">
+          <span class="toggle-label">Mark as read immediately</span>
+          <label class="switch">
+            <input type="checkbox" id="read-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Save Button -->
+        <button id="btn-save" class="btn-primary">
+          Save Bookmark
+        </button>
+
+        <!-- Status Message -->
+        <div id="status-message" class="status-box hidden"></div>
+      </div>
+    </main>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
