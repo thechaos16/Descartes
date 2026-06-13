@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
 import Auth from './components/Auth';
 import FoodTracker from './components/FoodTracker';
@@ -11,9 +11,15 @@ import './App.css';
 
 function Navigation({ session }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const userName = session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || 'User';
   const avatarUrl = session?.user?.user_metadata?.avatar_url;
   const isFoodTracker = location.pathname === '/' || location.pathname === '/history';
+
+  // Determine active tab for dropdown
+  let currentTab = '/';
+  if (location.pathname === '/todos') currentTab = '/todos';
+  else if (location.pathname === '/bookmarks') currentTab = '/bookmarks';
 
   return (
     <>
@@ -39,6 +45,17 @@ function Navigation({ session }) {
               <Bookmark size={18} /> Bookmarks
             </Link>
           </div>
+
+          <select 
+            value={currentTab} 
+            onChange={(e) => navigate(e.target.value)}
+            className="nav-select"
+            aria-label="Navigation menu"
+          >
+            <option value="/">🍽️ Food Tracker</option>
+            <option value="/todos">📅 Todo List</option>
+            <option value="/bookmarks">🔖 Bookmarks</option>
+          </select>
           <div className="nav-user">
             {avatarUrl && <img src={avatarUrl} alt="Avatar" className="user-avatar" />}
             <span className="user-name">{userName}</span>
