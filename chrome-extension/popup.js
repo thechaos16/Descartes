@@ -173,7 +173,7 @@ function showStatus(msg, type) {
 
 // Open Descartes login button handler
 btnLogin.addEventListener("click", () => {
-  chrome.tabs.create({ url: "http://localhost:5173" });
+  chrome.tabs.create({ url: "https://descartes-tau.vercel.app/" });
 });
 
 // Save bookmark button handler
