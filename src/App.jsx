@@ -5,37 +5,55 @@ import Auth from './components/Auth';
 import FoodTracker from './components/FoodTracker';
 import HistoryPage from './components/HistoryPage';
 import TodoCalendar from './components/TodoCalendar';
-import { PlusCircle, List, LogOut, CheckSquare } from 'lucide-react';
+import { PlusCircle, List, LogOut, CheckSquare, Utensils } from 'lucide-react';
 import './App.css';
 
 function Navigation({ session }) {
   const location = useLocation();
   const userName = session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || 'User';
   const avatarUrl = session?.user?.user_metadata?.avatar_url;
+  const isFoodTracker = location.pathname === '/' || location.pathname === '/history';
 
   return (
-    <nav className="top-nav">
-      <div className="nav-container">
-        <div className="nav-links">
-          <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>
-            <PlusCircle size={18} /> Add Entry
-          </Link>
-          <Link to="/history" className={`nav-link ${location.pathname === '/history' ? 'active' : ''}`}>
-            <List size={18} /> History
-          </Link>
-          <Link to="/todos" className={`nav-link ${location.pathname === '/todos' ? 'active' : ''}`}>
-            <CheckSquare size={18} /> Todos
-          </Link>
+    <>
+      <nav className="top-nav">
+        <div className="nav-container">
+          <div className="nav-links">
+            <Link 
+              to="/" 
+              className={`nav-link ${isFoodTracker ? 'active' : ''}`}
+            >
+              <Utensils size={18} /> Food Tracker
+            </Link>
+            <Link 
+              to="/todos" 
+              className={`nav-link ${location.pathname === '/todos' ? 'active' : ''}`}
+            >
+              <CheckSquare size={18} /> Todo List
+            </Link>
+          </div>
+          <div className="nav-user">
+            {avatarUrl && <img src={avatarUrl} alt="Avatar" className="user-avatar" />}
+            <span className="user-name">{userName}</span>
+            <button className="btn-logout" onClick={() => supabase.auth.signOut()} title="Log out">
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
-        <div className="nav-user">
-          {avatarUrl && <img src={avatarUrl} alt="Avatar" className="user-avatar" />}
-          <span className="user-name">{userName}</span>
-          <button className="btn-logout" onClick={() => supabase.auth.signOut()} title="Log out">
-            <LogOut size={18} />
-          </button>
+      </nav>
+      {isFoodTracker && (
+        <div className="sub-nav-bar">
+          <div className="sub-nav-container">
+            <Link to="/" className={`sub-nav-link ${location.pathname === '/' ? 'active' : ''}`}>
+              <PlusCircle size={16} /> Record
+            </Link>
+            <Link to="/history" className={`sub-nav-link ${location.pathname === '/history' ? 'active' : ''}`}>
+              <List size={16} /> History
+            </Link>
+          </div>
         </div>
-      </div>
-    </nav>
+      )}
+    </>
   );
 }
 
