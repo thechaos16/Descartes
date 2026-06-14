@@ -4,9 +4,8 @@ import './FoodTracker.css';
 
 const FoodTracker = ({ onAddEntry }) => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [hour, setHour] = useState('08');
-  const [minute, setMinute] = useState('30');
-  const [ampm, setAmpm] = useState('AM');
+  const [hour, setHour] = useState('12');
+  const [minute, setMinute] = useState('00');
   const [food, setFood] = useState('');
   const [labels, setLabels] = useState([]);
 
@@ -28,7 +27,7 @@ const FoodTracker = ({ onAddEntry }) => {
     if (!food.trim()) return;
     
     // Create the entry
-    const timeStr = `${hour}:${minute} ${ampm}`;
+    const timeStr = `${hour}:${minute}`;
     const newEntry = {
       id: Date.now().toString(),
       date,
@@ -82,7 +81,7 @@ const FoodTracker = ({ onAddEntry }) => {
                 value={hour}
                 onChange={(e) => setHour(e.target.value)}
               >
-                {Array.from({length: 12}, (_, i) => i + 1).map(h => {
+                {Array.from({length: 24}, (_, i) => i).map(h => {
                   const val = h.toString().padStart(2, '0');
                   return <option key={val} value={val}>{val}</option>;
                 })}
@@ -98,18 +97,6 @@ const FoodTracker = ({ onAddEntry }) => {
                   return <option key={val} value={val}>{val}</option>;
                 })}
               </select>
-              <div className="ampm-toggle">
-                <button 
-                  type="button" 
-                  className={`toggle-btn ${ampm === 'AM' ? 'active' : ''}`}
-                  onClick={() => setAmpm('AM')}
-                >AM</button>
-                <button 
-                  type="button" 
-                  className={`toggle-btn ${ampm === 'PM' ? 'active' : ''}`}
-                  onClick={() => setAmpm('PM')}
-                >PM</button>
-              </div>
             </div>
           </div>
         </div>
