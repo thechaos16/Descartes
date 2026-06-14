@@ -2,6 +2,24 @@ import { useState } from 'react';
 import { Clock, Utensils, CalendarDays, Inbox, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import './HistoryPage.css';
 
+const formatTimeStr = (timeStr) => {
+  if (!timeStr) return '';
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return timeStr;
+  
+  let [_, hoursStr, minutesStr, ampm] = match;
+  let hours = parseInt(hoursStr, 10);
+  ampm = ampm.toUpperCase();
+  
+  if (ampm === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (ampm === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  
+  return `${hours.toString().padStart(2, '0')}:${minutesStr}`;
+};
+
 const HistoryPage = ({ entries }) => {
   const [selectedDate, setSelectedDate] = useState(() => {
     const tzOffset = new Date().getTimezoneOffset() * 60000;
@@ -86,7 +104,7 @@ const HistoryPage = ({ entries }) => {
               >
                 <div className="entry-time">
                   <Clock size={16} />
-                  <span>{entry.timeStr}</span>
+                  <span>{formatTimeStr(entry.timeStr)}</span>
                 </div>
                 
                 <div className="entry-details">
