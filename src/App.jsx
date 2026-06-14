@@ -156,6 +156,41 @@ function App() {
     }
   };
 
+  const deleteEntry = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('food_entries')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchEntries();
+    } catch (error) {
+      console.error('Error deleting entry:', error.message);
+      alert('Failed to delete entry.');
+    }
+  };
+
+  const updateEntry = async (id, updatedEntry) => {
+    try {
+      const { error } = await supabase
+        .from('food_entries')
+        .update({
+          date: updatedEntry.date,
+          time_str: updatedEntry.timeStr,
+          food: updatedEntry.food,
+          labels: updatedEntry.labels
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchEntries();
+    } catch (error) {
+      console.error('Error updating entry:', error.message);
+      alert('Failed to update entry.');
+    }
+  };
+
   if (!session) {
     return <Auth />;
   }
@@ -170,7 +205,7 @@ function App() {
           ) : (
             <Routes>
               <Route path="/" element={<FoodTracker onAddEntry={addEntry} />} />
-              <Route path="/history" element={<HistoryPage entries={entries} />} />
+              <Route path="/history" element={<HistoryPage entries={entries} onDeleteEntry={deleteEntry} onUpdateEntry={updateEntry} />} />
               <Route path="/todos" element={<TodoCalendar />} />
               <Route path="/bookmarks" element={<BookmarksPage />} />
             </Routes>
