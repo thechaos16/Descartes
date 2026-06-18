@@ -102,16 +102,53 @@ function normalizeUrl(rawUrl) {
   }
 }
 
+// Refresh the session using the refresh token from Supabase
+async function refreshSession(refreshToken) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.access_token) {
+        return data;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to refresh session:", e);
+  }
+  return null;
+}
+
 // Authentication Session retrieval
 async function authenticate() {
   // Check cached token in Extension storage
   const storage = await chrome.storage.local.get(["descartes_token_data"]);
   let session = storage.descartes_token_data;
 
-  if (session && session.expires_at && session.expires_at * 1000 > Date.now()) {
-    accessToken = session.access_token;
-    showView(formView);
-    return;
+  if (session && session.expires_at) {
+    const now = Date.now();
+    // If access token is still valid, use it
+    if (session.expires_at * 1000 > now) {
+      accessToken = session.access_token;
+      showView(formView);
+      return;
+    }
+    // If expired but we have a refresh token, try to refresh it
+    if (session.refresh_token) {
+      const refreshedSession = await refreshSession(session.refresh_token);
+      if (refreshedSession) {
+        accessToken = refreshedSession.access_token;
+        await chrome.storage.local.set({ descartes_token_data: refreshedSession });
+        showView(formView);
+        return;
+      }
+    }
   }
 
   // Token is missing or expired, attempt to extract it from any active Descartes tab

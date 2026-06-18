@@ -39,7 +39,16 @@ const parseTimeStr = (timeStr) => {
   const standardTime = formatTimeStr(timeStr);
   const parts = standardTime.split(':');
   if (parts.length === 2) {
-    return { hour: parts[0], minute: parts[1] };
+    let h = parseInt(parts[0], 10);
+    let m = Math.round(parseInt(parts[1], 10) / 10) * 10;
+    if (m === 60) {
+      m = 0;
+      h = (h + 1) % 24;
+    }
+    return { 
+      hour: h.toString().padStart(2, '0'), 
+      minute: m.toString().padStart(2, '0') 
+    };
   }
   return { hour: '12', minute: '00' };
 };
@@ -361,7 +370,7 @@ const HistoryPage = ({ entries, onDeleteEntry, onUpdateEntry }) => {
                           value={editMinute}
                           onChange={(e) => setEditMinute(e.target.value)}
                         >
-                          {Array.from({length: 60}, (_, i) => i).map(m => {
+                          {[0, 10, 20, 30, 40, 50].map(m => {
                             const val = m.toString().padStart(2, '0');
                             return <option key={val} value={val}>{val}</option>;
                           })}

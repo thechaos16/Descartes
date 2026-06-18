@@ -2,10 +2,30 @@ import { useState } from 'react';
 import { Clock, Utensils, Tag, PlusCircle, Calendar } from 'lucide-react';
 import './FoodTracker.css';
 
+const getInitialTime = () => {
+  const now = new Date();
+  let h = now.getHours();
+  let m = Math.round(now.getMinutes() / 10) * 10;
+  if (m === 60) {
+    m = 0;
+    h = (h + 1) % 24;
+  }
+  return {
+    hour: h.toString().padStart(2, '0'),
+    minute: m.toString().padStart(2, '0'),
+  };
+};
+
+const getInitialDate = () => {
+  const tzOffset = new Date().getTimezoneOffset() * 60000;
+  return new Date(Date.now() - tzOffset).toISOString().split('T')[0];
+};
+
 const FoodTracker = ({ onAddEntry }) => {
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [hour, setHour] = useState('12');
-  const [minute, setMinute] = useState('00');
+  const initialTime = getInitialTime();
+  const [date, setDate] = useState(getInitialDate());
+  const [hour, setHour] = useState(initialTime.hour);
+  const [minute, setMinute] = useState(initialTime.minute);
   const [food, setFood] = useState('');
   const [labels, setLabels] = useState([]);
 
@@ -92,7 +112,7 @@ const FoodTracker = ({ onAddEntry }) => {
                 value={minute}
                 onChange={(e) => setMinute(e.target.value)}
               >
-                {Array.from({length: 60}, (_, i) => i).map(m => {
+                {[0, 10, 20, 30, 40, 50].map(m => {
                   const val = m.toString().padStart(2, '0');
                   return <option key={val} value={val}>{val}</option>;
                 })}
