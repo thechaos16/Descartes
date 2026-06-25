@@ -21,6 +21,14 @@
   --label-dinner: #60a5fa;
   --label-snack: #a78bfa;
 
+  /* Happiness Categories */
+  --label-work: #60a5fa;
+  --label-social: #f472b6;
+  --label-leisure: #a78bfa;
+  --label-health: #2dd4bf;
+  --label-nature: #34d399;
+  --label-other: #fbbf24;
+
   --border-color: rgba(255, 255, 255, 0.08);
   --border-focus: rgba(129, 140, 248, 0.5);
   
