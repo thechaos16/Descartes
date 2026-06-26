@@ -2,30 +2,13 @@ import { useState } from 'react';
 import { Clock, Smile, Tag, PlusCircle, Calendar, Briefcase, Users, Gamepad, Sparkles, Sun } from 'lucide-react';
 import './HappinessTracker.css';
 
-const getInitialTime = () => {
-  const now = new Date();
-  let h = now.getHours();
-  let m = Math.round(now.getMinutes() / 10) * 10;
-  if (m === 60) {
-    m = 0;
-    h = (h + 1) % 24;
-  }
-  return {
-    hour: h.toString().padStart(2, '0'),
-    minute: m.toString().padStart(2, '0'),
-  };
-};
-
 const getInitialDate = () => {
   const tzOffset = new Date().getTimezoneOffset() * 60000;
   return new Date(Date.now() - tzOffset).toISOString().split('T')[0];
 };
 
 const HappinessTracker = ({ onAddEntry }) => {
-  const initialTime = getInitialTime();
   const [date, setDate] = useState(getInitialDate());
-  const [hour, setHour] = useState(initialTime.hour);
-  const [minute, setMinute] = useState(initialTime.minute);
   const [moment, setMoment] = useState('');
   const [category, setCategory] = useState('other');
 
@@ -42,7 +25,7 @@ const HappinessTracker = ({ onAddEntry }) => {
     e.preventDefault();
     if (!moment.trim()) return;
     
-    const timeStr = `${hour}:${minute}`;
+    const timeStr = '23:30';
     const newEntry = {
       id: Date.now().toString(),
       date,
@@ -70,49 +53,19 @@ const HappinessTracker = ({ onAddEntry }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="tracker-form">
-          <div className="form-group-row">
-            <div className="form-group flex-1">
-              <label>
-                <Calendar size={16} /> Date
-              </label>
-              <input 
-                type="date" 
-                className="input-field date-input"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group flex-2">
-              <label>
-                <Clock size={16} /> Time
-              </label>
-              <div className="time-picker-row">
-                <select 
-                  className="time-block"
-                  value={hour}
-                  onChange={(e) => setHour(e.target.value)}
-                >
-                  {Array.from({length: 24}, (_, i) => i).map(h => {
-                    const val = h.toString().padStart(2, '0');
-                    return <option key={val} value={val}>{val}</option>;
-                  })}
-                </select>
-                <span className="time-separator">:</span>
-                <select 
-                  className="time-block"
-                  value={minute}
-                  onChange={(e) => setMinute(e.target.value)}
-                >
-                  {[0, 10, 20, 30, 40, 50].map(m => {
-                    const val = m.toString().padStart(2, '0');
-                    return <option key={val} value={val}>{val}</option>;
-                  })}
-                </select>
-              </div>
-            </div>
+          <div className="form-group">
+            <label>
+              <Calendar size={16} /> Date
+            </label>
+            <input 
+              type="date" 
+              className="input-field date-input"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
           </div>
+
 
           <div className="form-group">
             <label htmlFor="moment-input">
@@ -134,6 +87,7 @@ const HappinessTracker = ({ onAddEntry }) => {
               <Tag size={16} /> Category
             </label>
             <div className="categories-grid">
+              {/* eslint-disable-next-line no-unused-vars */}
               {categories.map(({ id, label, icon: IconComponent, colorVar }) => {
                 const isSelected = category === id;
                 return (

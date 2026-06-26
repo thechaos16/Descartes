@@ -335,49 +335,48 @@ const HistoryPage = ({ entries, onDeleteEntry, onUpdateEntry }) => {
                 </div>
               ) : (
                 <>
-                  <div className="form-group-row">
-                    <div className="form-group flex-1">
-                      <label>
-                        <Calendar size={14} /> Date
-                      </label>
-                      <input 
-                        type="date" 
-                        className="input-field date-input"
-                        value={editDate}
-                        onChange={(e) => setEditDate(e.target.value)}
-                        required
-                      />
-                    </div>
+                  <div className="form-group">
+                    <label>
+                      <Calendar size={14} /> Date
+                    </label>
+                    <input 
+                      type="date" 
+                      className="input-field date-input"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                    <div className="form-group flex-2">
-                      <label>
-                        <Clock size={14} /> Time
-                      </label>
-                      <div className="time-picker-row">
-                        <select 
-                          className="time-block"
-                          value={editHour}
-                          onChange={(e) => setEditHour(e.target.value)}
-                        >
-                          {Array.from({length: 24}, (_, i) => i).map(h => {
-                            const val = h.toString().padStart(2, '0');
-                            return <option key={val} value={val}>{val}</option>;
-                          })}
-                        </select>
-                        <span className="time-separator">:</span>
-                        <select 
-                          className="time-block"
-                          value={editMinute}
-                          onChange={(e) => setEditMinute(e.target.value)}
-                        >
-                          {[0, 10, 20, 30, 40, 50].map(m => {
-                            const val = m.toString().padStart(2, '0');
-                            return <option key={val} value={val}>{val}</option>;
-                          })}
-                        </select>
-                      </div>
+                  <div className="form-group">
+                    <label>
+                      <Clock size={14} /> Time
+                    </label>
+                    <div className="time-picker-row">
+                      <select 
+                        className="time-block"
+                        value={editHour}
+                        onChange={(e) => setEditHour(e.target.value)}
+                      >
+                        {Array.from({length: 24}, (_, i) => i).map(h => {
+                          const val = h.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="time-separator">:</span>
+                      <select 
+                        className="time-block"
+                        value={editMinute}
+                        onChange={(e) => setEditMinute(e.target.value)}
+                      >
+                        {[0, 10, 20, 30, 40, 50].map(m => {
+                          const val = m.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
                     </div>
                   </div>
+
 
                   <div className="form-group">
                     <label htmlFor="modal-food-input">

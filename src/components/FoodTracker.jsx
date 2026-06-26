@@ -77,25 +77,24 @@ const FoodTracker = ({ onAddEntry }) => {
 
         <form onSubmit={handleSubmit} className="tracker-form">
           
-          <div className="form-group-row">
-            <div className="form-group flex-1">
-              <label>
-                <Calendar size={16} /> Date
-              </label>
-              <input 
-                type="date" 
-                className="input-field date-input"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-            </div>
+          <div className="form-group">
+            <label>
+              <Calendar size={16} /> Date
+            </label>
+            <input 
+              type="date" 
+              className="input-field date-input"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
+          </div>
 
-            <div className="form-group flex-2">
-              <label>
-                <Clock size={16} /> Time
-              </label>
-              <div className="time-picker-row">
+          <div className="form-group">
+            <label>
+              <Clock size={16} /> Time
+            </label>
+            <div className="time-picker-row">
               <select 
                 className="time-block"
                 value={hour}
@@ -119,7 +118,7 @@ const FoodTracker = ({ onAddEntry }) => {
               </select>
             </div>
           </div>
-        </div>
+
 
           <div className="form-group">
             <label htmlFor="food-input">

@@ -348,6 +348,7 @@
   appearance: none;
   text-align: center;
   min-width: 3.5rem;
+  flex: 1;
   transition: all var(--transition-fast);
 }
 

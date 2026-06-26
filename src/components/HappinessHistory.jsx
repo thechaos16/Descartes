@@ -39,24 +39,6 @@ const formatTimeStr = (timeStr) => {
   return `${hours.toString().padStart(2, '0')}:${minutesStr}`;
 };
 
-const parseTimeStr = (timeStr) => {
-  if (!timeStr) return { hour: '12', minute: '00' };
-  const standardTime = formatTimeStr(timeStr);
-  const parts = standardTime.split(':');
-  if (parts.length === 2) {
-    let h = parseInt(parts[0], 10);
-    let m = Math.round(parseInt(parts[1], 10) / 10) * 10;
-    if (m === 60) {
-      m = 0;
-      h = (h + 1) % 24;
-    }
-    return { 
-      hour: h.toString().padStart(2, '0'), 
-      minute: m.toString().padStart(2, '0') 
-    };
-  }
-  return { hour: '12', minute: '00' };
-};
 
 const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -68,8 +50,6 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
   const [editingEntry, setEditingEntry] = useState(null);
   const [editMoment, setEditMoment] = useState('');
   const [editDate, setEditDate] = useState('');
-  const [editHour, setEditHour] = useState('12');
-  const [editMinute, setEditMinute] = useState('00');
   const [editCategory, setEditCategory] = useState('other');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -116,9 +96,6 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
     setEditingEntry(entry);
     setEditMoment(entry.moment);
     setEditDate(entry.date);
-    const { hour, minute } = parseTimeStr(entry.timeStr);
-    setEditHour(hour);
-    setEditMinute(minute);
     setEditCategory(entry.category || 'other');
     setShowDeleteConfirm(false);
   };
@@ -127,7 +104,7 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
     e.preventDefault();
     if (!editMoment.trim() || !editingEntry) return;
     
-    const timeStr = `${editHour}:${editMinute}`;
+    const timeStr = '23:30';
     await onUpdateEntry(editingEntry.id, {
       date: editDate,
       timeStr,
@@ -330,48 +307,17 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
                 </div>
               ) : (
                 <>
-                  <div className="form-group-row">
-                    <div className="form-group flex-1">
-                      <label>
-                        <Calendar size={14} /> Date
-                      </label>
-                      <input 
-                        type="date" 
-                        className="input-field date-input"
-                        value={editDate}
-                        onChange={(e) => setEditDate(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group flex-2">
-                      <label>
-                        <Clock size={14} /> Time
-                      </label>
-                      <div className="time-picker-row">
-                        <select 
-                          className="time-block"
-                          value={editHour}
-                          onChange={(e) => setEditHour(e.target.value)}
-                        >
-                          {Array.from({length: 24}, (_, i) => i).map(h => {
-                            const val = h.toString().padStart(2, '0');
-                            return <option key={val} value={val}>{val}</option>;
-                          })}
-                        </select>
-                        <span className="time-separator">:</span>
-                        <select 
-                          className="time-block"
-                          value={editMinute}
-                          onChange={(e) => setEditMinute(e.target.value)}
-                        >
-                          {[0, 10, 20, 30, 40, 50].map(m => {
-                            const val = m.toString().padStart(2, '0');
-                            return <option key={val} value={val}>{val}</option>;
-                          })}
-                        </select>
-                      </div>
-                    </div>
+                  <div className="form-group">
+                    <label>
+                      <Calendar size={14} /> Date
+                    </label>
+                    <input 
+                      type="date" 
+                      className="input-field date-input"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      required
+                    />
                   </div>
 
                   <div className="form-group">
@@ -393,6 +339,7 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
                       <Tag size={14} /> Category
                     </label>
                     <div className="categories-grid">
+                      {/* eslint-disable-next-line no-unused-vars */}
                       {categories.map(({ id, label, icon: IconComponent, colorVar }) => {
                         const isSelected = editCategory === id;
                         return (

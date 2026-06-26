@@ -113,6 +113,7 @@
   appearance: none;
   text-align: center;
   min-width: 4rem;
+  flex: 1;
   transition: all var(--transition-fast);
 }
 
