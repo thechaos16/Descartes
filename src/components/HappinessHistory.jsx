@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Clock, 
   Smile, 
@@ -16,7 +16,9 @@ import {
   Users,
   Gamepad,
   Sparkles,
-  Sun
+  Sun,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import './HappinessHistory.css';
 
@@ -49,6 +51,19 @@ const formatDateStr = (dateStr) => {
 const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  
+  // Calendar states
+  const [navDate, setNavDate] = useState(new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(null);
+
+  // Pagination state (infinite scroll)
+  const [visibleCount, setVisibleCount] = useState(15);
+
+  // Today date state (lazy initializer to satisfy react purity check)
+  const [todayDateStr] = useState(() => {
+    const tzOffset = new Date().getTimezoneOffset() * 60000;
+    return new Date(Date.now() - tzOffset).toISOString().split('T')[0];
+  });
 
   // Edit / Delete states
   const [editingEntry, setEditingEntry] = useState(null);
@@ -61,6 +76,8 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
   const pressTimerRef = useRef(null);
   const touchStartPosRef = useRef({ x: 0, y: 0 });
   const isLongPressTriggered = useRef(false);
+
+  const observerRef = useRef(null);
 
   const categories = [
     { id: 'work', label: 'Work & Learning', icon: Briefcase, colorVar: 'var(--label-work)' },
@@ -78,6 +95,100 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
       icon: Smile,
       colorVar: 'var(--label-other)'
     };
+  };
+
+  const filteredEntries = entries.filter(entry => {
+    const matchesSearch = entry.moment.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         entry.date.includes(searchQuery);
+    const matchesCategory = categoryFilter === 'all' || entry.category === categoryFilter;
+    const matchesCalendar = !selectedCalendarDate || entry.date === selectedCalendarDate;
+    return matchesSearch && matchesCategory && matchesCalendar;
+  });
+
+  // Set up intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount(prev => Math.min(prev + 15, filteredEntries.length));
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    const currentSentinel = observerRef.current;
+    if (currentSentinel) {
+      observer.observe(currentSentinel);
+    }
+
+    return () => {
+      if (currentSentinel) {
+        observer.unobserve(currentSentinel);
+      }
+    };
+  }, [filteredEntries.length]);
+
+  // Calendar logic helpers
+  const getCalendarGridRange = () => {
+    const year = navDate.getFullYear();
+    const month = navDate.getMonth();
+    
+    const firstDayOfMonth = new Date(year, month, 1);
+    const startDayOfWeek = firstDayOfMonth.getDay();
+    
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+    
+    const grid = [];
+    
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+      const d = daysInPrevMonth - i;
+      const prevMonth = month === 0 ? 11 : month - 1;
+      const prevYear = month === 0 ? year - 1 : year;
+      grid.push({
+        dateStr: `${prevYear}-${(prevMonth + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`,
+        dayNum: d,
+        isCurrentMonth: false,
+      });
+    }
+    
+    for (let d = 1; d <= daysInMonth; d++) {
+      grid.push({
+        dateStr: `${year}-${(month + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`,
+        dayNum: d,
+        isCurrentMonth: true,
+      });
+    }
+    
+    const remainingCells = 42 - grid.length;
+    for (let d = 1; d <= remainingCells; d++) {
+      const nextMonth = month === 11 ? 0 : month + 1;
+      const nextYear = month === 11 ? year + 1 : year;
+      grid.push({
+        dateStr: `${nextYear}-${(nextMonth + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`,
+        dayNum: d,
+        isCurrentMonth: false,
+      });
+    }
+    
+    return grid;
+  };
+
+  const handlePrevMonth = () => {
+    setNavDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setNavDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const handleGoToToday = () => {
+    const today = new Date();
+    setNavDate(today);
+    const tzOffset = today.getTimezoneOffset() * 60000;
+    const todayStr = new Date(today.getTime() - tzOffset).toISOString().split('T')[0];
+    setSelectedCalendarDate(todayStr);
+    setVisibleCount(15);
   };
 
   const openEditModal = (entry) => {
@@ -149,16 +260,27 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
     }
   };
 
-  const filteredEntries = entries.filter(entry => {
-    const matchesSearch = entry.moment.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         entry.date.includes(searchQuery);
-    const matchesCategory = categoryFilter === 'all' || entry.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const calendarGrid = getCalendarGridRange();
+
+  // Group entries by date for calendar indicators
+  const entriesMap = entries.reduce((acc, entry) => {
+    if (!acc[entry.date]) {
+      acc[entry.date] = [];
+    }
+    acc[entry.date].push(entry);
+    return acc;
+  }, {});
+
+  const displayedEntries = filteredEntries.slice(0, visibleCount);
 
   return (
     <div className="history-wrapper">
-      <div className="history-container">
+      <div className="history-container wide-layout">
         
         <div className="history-header">
           <CalendarDays size={32} color="var(--accent-secondary)" className="header-icon" />
@@ -166,123 +288,226 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
           <p className="subtitle">Look back on moments of joy.</p>
         </div>
 
-        <div className="history-toolbar glass-panel">
-          <div className="search-box">
-            <Search size={18} color="var(--text-muted)" />
-            <input 
-              type="text" 
-              placeholder="Search happy moments..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
-            />
-          </div>
-          <div className="filter-select-wrapper">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="category-filter-select"
-            >
-              <option value="all">All Categories</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.label}</option>
+        <div className="history-layout-container">
+          
+          {/* Left Column: Calendar Panel */}
+          <div className="calendar-section">
+            <div className="calendar-header">
+              <button className="nav-arrow-btn" onClick={handlePrevMonth} title="Previous Month">
+                <ChevronLeft size={18} />
+              </button>
+              <span className="month-label">
+                {monthNames[navDate.getMonth()]} {navDate.getFullYear()}
+              </span>
+              <button className="nav-arrow-btn" onClick={handleNextMonth} title="Next Month">
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            <div className="calendar-grid">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => (
+                <div key={i} className="grid-weekday-header">{day}</div>
               ))}
-            </select>
+
+              {calendarGrid.map((cell) => {
+                const dayEntries = entriesMap[cell.dateStr] || [];
+                const isSelected = cell.dateStr === selectedCalendarDate;
+                const isToday = cell.dateStr === todayDateStr;
+                
+                return (
+                  <button
+                    key={cell.dateStr}
+                    onClick={() => {
+                      setSelectedCalendarDate(prev => prev === cell.dateStr ? null : cell.dateStr);
+                      setVisibleCount(15);
+                    }}
+                    className={`grid-day-cell ${cell.isCurrentMonth ? 'current-month' : 'other-month'} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`}
+                  >
+                    <span className="day-number">{cell.dayNum}</span>
+                    
+                    {dayEntries.length > 0 && (
+                      <div className="calendar-dots">
+                        {dayEntries.slice(0, 3).map((entry) => {
+                          const cat = getCategoryDetails(entry.category);
+                          return (
+                            <span 
+                              key={entry.id} 
+                              className="calendar-dot" 
+                              style={{ backgroundColor: cat.colorVar }}
+                              title={entry.moment}
+                            />
+                          );
+                        })}
+                        {dayEntries.length > 3 && <span className="calendar-dot-more">+</span>}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="calendar-footer">
+              <button className="btn-today" onClick={handleGoToToday}>
+                Today
+              </button>
+              {selectedCalendarDate && (
+                <button className="btn-clear-selection" onClick={() => {
+                  setSelectedCalendarDate(null);
+                  setVisibleCount(15);
+                }}>
+                  Clear selection
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: List View Panel */}
+          <div className="list-section">
+            <div className="history-toolbar glass-panel">
+              <div className="search-box">
+                <Search size={18} color="var(--text-muted)" />
+                <input 
+                  type="text" 
+                  placeholder="Search happy moments..." 
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setVisibleCount(15);
+                  }}
+                  className="search-input"
+                />
+              </div>
+              <div className="filter-select-wrapper">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => {
+                    setCategoryFilter(e.target.value);
+                    setVisibleCount(15);
+                  }}
+                  className="category-filter-select"
+                >
+                  <option value="all">All Categories</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {selectedCalendarDate && (
+              <div className="filter-banner glass-panel">
+                <span>Showing joy from <strong>{formatDateStr(selectedCalendarDate)}</strong></span>
+                <button className="clear-filter-btn" onClick={() => {
+                  setSelectedCalendarDate(null);
+                  setVisibleCount(15);
+                }}>
+                  Show All Days
+                </button>
+              </div>
+            )}
+
+            {filteredEntries.length === 0 ? (
+              <div className="empty-state animate-fade-in">
+                <Inbox size={48} color="var(--text-muted)" />
+                <h3>No moments logged</h3>
+                <p>
+                  {searchQuery.trim() !== '' || categoryFilter !== 'all' || selectedCalendarDate
+                    ? "No matching entries found for your search."
+                    : "You haven't logged any happy moments yet. Go to the Record page to start!"}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="history-tip">
+                  <span>Tip: Click or long-press a row to edit or delete</span>
+                </div>
+                <div className="table-wrapper glass-panel">
+                  <table className="history-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Moment</th>
+                        <th className="actions-header"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayedEntries.map((entry, idx) => {
+                        const cat = getCategoryDetails(entry.category);
+                        const CategoryIcon = cat.icon;
+                        return (
+                          <tr 
+                            key={entry.id} 
+                            className="table-row"
+                            style={{ animationDelay: `${idx * 0.05}s` }}
+                            onMouseDown={(e) => handleStart(e, entry)}
+                            onTouchStart={(e) => handleStart(e, entry)}
+                            onMouseMove={handleMove}
+                            onTouchMove={handleMove}
+                            onMouseUp={handleEnd}
+                            onTouchEnd={handleEnd}
+                            onContextMenu={(e) => e.preventDefault()}
+                          >
+                            <td className="col-date">
+                              <div className="date-cell">
+                                <span className="date-text">{formatDateStr(entry.date)}</span>
+                                {entry.timeStr && (
+                                  <span className="time-subtext">
+                                    <Clock size={10} style={{ marginRight: '3px' }} />
+                                    {formatTimeStr(entry.timeStr)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="col-category">
+                              <span 
+                                className="history-label-chip"
+                                style={{
+                                  '--label-color': cat.colorVar,
+                                  backgroundColor: 'rgba(255,255,255,0.04)',
+                                  borderColor: 'var(--label-color)',
+                                  color: 'var(--label-color)'
+                                }}
+                              >
+                                <CategoryIcon size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                                {cat.label}
+                              </span>
+                            </td>
+                            <td className="col-text">
+                              <span className="moment-text">{entry.moment}</span>
+                            </td>
+                            <td className="col-actions">
+                              <button 
+                                className="card-menu-btn" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditModal(entry);
+                                }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                id={`edit-btn-${entry.id}`}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                title="Edit or Delete"
+                              >
+                                <MoreVertical size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {filteredEntries.length > visibleCount && (
+                  <div ref={observerRef} className="infinite-scroll-sentinel">
+                    <div className="spinner-small"></div>
+                    <span>Loading more moments...</span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
-
-        {filteredEntries.length === 0 ? (
-          <div className="empty-state animate-fade-in">
-            <Inbox size={48} color="var(--text-muted)" />
-            <h3>No moments logged</h3>
-            <p>
-              {searchQuery.trim() !== '' || categoryFilter !== 'all'
-                ? "No matching entries found for your search."
-                : "You haven't logged any happy moments yet. Go to the Record page to start!"}
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="history-tip">
-              <span>Tip: Click or long-press a row to edit or delete</span>
-            </div>
-            <div className="table-wrapper glass-panel">
-              <table className="history-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Category</th>
-                    <th>Moment</th>
-                    <th className="actions-header"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEntries.map((entry, idx) => {
-                    const cat = getCategoryDetails(entry.category);
-                    const CategoryIcon = cat.icon;
-                    return (
-                      <tr 
-                        key={entry.id} 
-                        className="table-row"
-                        style={{ animationDelay: `${idx * 0.05}s` }}
-                        onMouseDown={(e) => handleStart(e, entry)}
-                        onTouchStart={(e) => handleStart(e, entry)}
-                        onMouseMove={handleMove}
-                        onTouchMove={handleMove}
-                        onMouseUp={handleEnd}
-                        onTouchEnd={handleEnd}
-                        onContextMenu={(e) => e.preventDefault()}
-                      >
-                        <td className="col-date">
-                          <div className="date-cell">
-                            <span className="date-text">{formatDateStr(entry.date)}</span>
-                            {entry.timeStr && (
-                              <span className="time-subtext">
-                                <Clock size={10} style={{ marginRight: '3px' }} />
-                                {formatTimeStr(entry.timeStr)}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="col-category">
-                          <span 
-                            className="history-label-chip"
-                            style={{
-                              '--label-color': cat.colorVar,
-                              backgroundColor: 'rgba(255,255,255,0.04)',
-                              borderColor: 'var(--label-color)',
-                              color: 'var(--label-color)'
-                            }}
-                          >
-                            <CategoryIcon size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                            {cat.label}
-                          </span>
-                        </td>
-                        <td className="col-text">
-                          <span className="moment-text">{entry.moment}</span>
-                        </td>
-                        <td className="col-actions">
-                          <button 
-                            className="card-menu-btn" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEditModal(entry);
-                            }}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onTouchStart={(e) => e.stopPropagation()}
-                            title="Edit or Delete"
-                          >
-                            <MoreVertical size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
 
       </div>
 
