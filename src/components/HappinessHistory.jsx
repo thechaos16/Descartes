@@ -4,8 +4,7 @@ import {
   Smile, 
   CalendarDays, 
   Inbox, 
-  ChevronLeft, 
-  ChevronRight, 
+  Search,
   Calendar, 
   Tag, 
   MoreVertical, 
@@ -39,12 +38,17 @@ const formatTimeStr = (timeStr) => {
   return `${hours.toString().padStart(2, '0')}:${minutesStr}`;
 };
 
+const formatDateStr = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { 
+    month: 'short', day: 'numeric', year: 'numeric' 
+  });
+};
 
 const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const tzOffset = new Date().getTimezoneOffset() * 60000;
-    return new Date(Date.now() - tzOffset).toISOString().split('T')[0];
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   // Edit / Delete states
   const [editingEntry, setEditingEntry] = useState(null);
@@ -66,22 +70,6 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
     { id: 'nature', label: 'Nature & Environment', icon: Sun, colorVar: 'var(--label-nature)' },
     { id: 'other', label: 'Other Joy', icon: Smile, colorVar: 'var(--label-other)' },
   ];
-
-  const navigateDays = (days) => {
-    const d = new Date(selectedDate);
-    d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
-    d.setDate(d.getDate() + days);
-    
-    const tzOffset = d.getTimezoneOffset() * 60000;
-    const newDateStr = new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
-    setSelectedDate(newDateStr);
-  };
-
-  const formattedDisplayDate = new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, { 
-    weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' 
-  });
-
-  const filteredEntries = entries.filter(e => e.date === selectedDate);
 
   const getCategoryDetails = (catId) => {
     return categories.find(c => c.id === catId) || {
@@ -161,6 +149,13 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
     }
   };
 
+  const filteredEntries = entries.filter(entry => {
+    const matchesSearch = entry.moment.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         entry.date.includes(searchQuery);
+    const matchesCategory = categoryFilter === 'all' || entry.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="history-wrapper">
       <div className="history-container">
@@ -171,98 +166,120 @@ const HappinessHistory = ({ entries, onDeleteEntry, onUpdateEntry }) => {
           <p className="subtitle">Look back on moments of joy.</p>
         </div>
 
-        <div className="date-navigator glass-panel">
-          <button className="date-nav-btn" onClick={() => navigateDays(-1)}>
-            <ChevronLeft size={20} />
-          </button>
-          
-          <div className="current-date-display">
-            <Calendar size={18} color="var(--accent-secondary)" />
-            <span>{formattedDisplayDate}</span>
+        <div className="history-toolbar glass-panel">
+          <div className="search-box">
+            <Search size={18} color="var(--text-muted)" />
             <input 
-              type="date"
-              className="invisible-date-picker"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              type="text" 
+              placeholder="Search happy moments..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
             />
           </div>
-
-          <button className="date-nav-btn" onClick={() => navigateDays(1)}>
-            <ChevronRight size={20} />
-          </button>
+          <div className="filter-select-wrapper">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="category-filter-select"
+            >
+              <option value="all">All Categories</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {filteredEntries.length === 0 ? (
           <div className="empty-state animate-fade-in">
             <Inbox size={48} color="var(--text-muted)" />
             <h3>No moments logged</h3>
-            <p>Did anything make you smile on this day? Try adding a memory!</p>
+            <p>
+              {searchQuery.trim() !== '' || categoryFilter !== 'all'
+                ? "No matching entries found for your search."
+                : "You haven't logged any happy moments yet. Go to the Record page to start!"}
+            </p>
           </div>
         ) : (
           <>
             <div className="history-tip">
-              <span>Tip: Long-press any card to edit or delete</span>
+              <span>Tip: Click or long-press a row to edit or delete</span>
             </div>
-            <div className="entries-list">
-              {filteredEntries.map((entry, idx) => {
-                const cat = getCategoryDetails(entry.category);
-                const CategoryIcon = cat.icon;
-                return (
-                  <div 
-                    key={entry.id} 
-                    className="entry-card glass-panel"
-                    style={{ animationDelay: `${idx * 0.1}s` }}
-                    onMouseDown={(e) => handleStart(e, entry)}
-                    onTouchStart={(e) => handleStart(e, entry)}
-                    onMouseMove={handleMove}
-                    onTouchMove={handleMove}
-                    onMouseUp={handleEnd}
-                    onTouchEnd={handleEnd}
-                    onContextMenu={(e) => e.preventDefault()}
-                  >
-                    <div className="entry-card-header">
-                      <div className="entry-time">
-                        <Clock size={14} />
-                        <span>{formatTimeStr(entry.timeStr)}</span>
-                      </div>
-                      <button 
-                        className="card-menu-btn" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditModal(entry);
-                        }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
-                        title="Edit or Delete"
+            <div className="table-wrapper glass-panel">
+              <table className="history-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Moment</th>
+                    <th className="actions-header"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEntries.map((entry, idx) => {
+                    const cat = getCategoryDetails(entry.category);
+                    const CategoryIcon = cat.icon;
+                    return (
+                      <tr 
+                        key={entry.id} 
+                        className="table-row"
+                        style={{ animationDelay: `${idx * 0.05}s` }}
+                        onMouseDown={(e) => handleStart(e, entry)}
+                        onTouchStart={(e) => handleStart(e, entry)}
+                        onMouseMove={handleMove}
+                        onTouchMove={handleMove}
+                        onMouseUp={handleEnd}
+                        onTouchEnd={handleEnd}
+                        onContextMenu={(e) => e.preventDefault()}
                       >
-                        <MoreVertical size={16} />
-                      </button>
-                    </div>
-                    
-                    <div className="entry-details">
-                      <h3 className="entry-moment">
-                        <Smile size={18} color="var(--accent-secondary)" style={{ flexShrink: 0 }} />
-                        <span>{entry.moment}</span>
-                      </h3>
-                      
-                      <div className="entry-labels">
-                        <span 
-                          className="history-label-chip"
-                          style={{
-                            '--label-color': cat.colorVar,
-                            backgroundColor: 'rgba(255,255,255,0.04)',
-                            borderColor: 'var(--label-color)',
-                            color: 'var(--label-color)'
-                          }}
-                        >
-                          <CategoryIcon size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                          {cat.label}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                        <td className="col-date">
+                          <div className="date-cell">
+                            <span className="date-text">{formatDateStr(entry.date)}</span>
+                            {entry.timeStr && (
+                              <span className="time-subtext">
+                                <Clock size={10} style={{ marginRight: '3px' }} />
+                                {formatTimeStr(entry.timeStr)}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="col-category">
+                          <span 
+                            className="history-label-chip"
+                            style={{
+                              '--label-color': cat.colorVar,
+                              backgroundColor: 'rgba(255,255,255,0.04)',
+                              borderColor: 'var(--label-color)',
+                              color: 'var(--label-color)'
+                            }}
+                          >
+                            <CategoryIcon size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                            {cat.label}
+                          </span>
+                        </td>
+                        <td className="col-text">
+                          <span className="moment-text">{entry.moment}</span>
+                        </td>
+                        <td className="col-actions">
+                          <button 
+                            className="card-menu-btn" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(entry);
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            title="Edit or Delete"
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </>
         )}
