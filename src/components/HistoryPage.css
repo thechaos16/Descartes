@@ -544,3 +544,10 @@
     width: 100%;
   }
 }
+
+/* Mobile-specific responsive adjustments */
+@media (max-width: 600px) {
+  .history-wrapper {
+    padding: 1rem 0.5rem;
+  }
+}

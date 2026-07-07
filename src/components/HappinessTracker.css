@@ -191,3 +191,23 @@
     transform: translateY(0);
   }
 }
+
+/* Mobile-specific responsive adjustments */
+@media (max-width: 600px) {
+  .tracker-wrapper {
+    padding: 1rem 0.5rem;
+  }
+  
+  .tracker-card {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .categories-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .category-chip {
+    padding: 0.65rem 0.85rem;
+  }
+}

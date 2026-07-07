@@ -868,3 +868,75 @@
     width: 100%;
   }
 }
+
+/* Mobile-specific responsive adjustments */
+@media (max-width: 600px) {
+  .history-wrapper {
+    padding: 1rem 0.5rem;
+  }
+
+  .calendar-section {
+    padding: 1rem;
+  }
+
+  .grid-day-cell {
+    height: 40px;
+    padding: 4px 1px 2px 1px;
+  }
+
+  .history-toolbar {
+    padding: 1rem;
+  }
+
+  /* Transform table into card list */
+  .history-table, 
+  .history-table thead, 
+  .history-table tbody, 
+  .history-table th, 
+  .history-table td, 
+  .history-table tr {
+    display: block;
+  }
+  
+  .history-table thead {
+    display: none;
+  }
+  
+  .history-table tr {
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.02);
+    padding: 1rem;
+    position: relative;
+  }
+  
+  .history-table td {
+    border: none;
+    padding: 0.25rem 0;
+    width: 100% !important;
+  }
+  
+  .history-table td.col-date {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .history-table td.col-category {
+    margin-bottom: 0.75rem;
+  }
+  
+  .history-table td.col-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+  }
+  
+  .history-table td.col-actions {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: auto !important;
+    padding: 0;
+  }
+}
