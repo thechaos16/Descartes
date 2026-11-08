@@ -17,14 +17,15 @@ function Navigation({ session }) {
   const navigate = useNavigate();
   const userName = session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || 'User';
   const avatarUrl = session?.user?.user_metadata?.avatar_url;
-  const isFoodTracker = location.pathname === '/' || location.pathname === '/history';
+  const isTodoList = location.pathname === '/' || location.pathname === '/todos';
+  const isFoodTracker = location.pathname === '/food' || location.pathname === '/food/history' || location.pathname === '/history';
   const isHappinessTracker = location.pathname === '/happiness' || location.pathname === '/happiness/history';
 
   // Determine active tab for dropdown
   let currentTab = '/';
-  if (location.pathname === '/todos') currentTab = '/todos';
+  if (isFoodTracker) currentTab = '/food';
   else if (location.pathname === '/bookmarks') currentTab = '/bookmarks';
-  else if (location.pathname === '/happiness' || location.pathname === '/happiness/history') currentTab = '/happiness';
+  else if (isHappinessTracker) currentTab = '/happiness';
 
   return (
     <>
@@ -33,6 +34,12 @@ function Navigation({ session }) {
           <div className="nav-links">
             <Link 
               to="/" 
+              className={`nav-link ${isTodoList ? 'active' : ''}`}
+            >
+              <CheckSquare size={18} /> Todo List
+            </Link>
+            <Link 
+              to="/food" 
               className={`nav-link ${isFoodTracker ? 'active' : ''}`}
             >
               <Utensils size={18} /> Food Tracker
@@ -42,12 +49,6 @@ function Navigation({ session }) {
               className={`nav-link ${isHappinessTracker ? 'active' : ''}`}
             >
               <Smile size={18} /> Happiness
-            </Link>
-            <Link 
-              to="/todos" 
-              className={`nav-link ${location.pathname === '/todos' ? 'active' : ''}`}
-            >
-              <CheckSquare size={18} /> Todo List
             </Link>
             <Link 
               to="/bookmarks" 
@@ -63,9 +64,9 @@ function Navigation({ session }) {
             className="nav-select"
             aria-label="Navigation menu"
           >
-            <option value="/">🍽️ Food Tracker</option>
+            <option value="/">📅 Todo List</option>
+            <option value="/food">🍽️ Food Tracker</option>
             <option value="/happiness">😊 Happiness Log</option>
-            <option value="/todos">📅 Todo List</option>
             <option value="/bookmarks">🔖 Bookmarks</option>
           </select>
           <div className="nav-user">
@@ -80,10 +81,10 @@ function Navigation({ session }) {
       {isFoodTracker && (
         <div className="sub-nav-bar">
           <div className="sub-nav-container">
-            <Link to="/" className={`sub-nav-link ${location.pathname === '/' ? 'active' : ''}`}>
+            <Link to="/food" className={`sub-nav-link ${location.pathname === '/food' ? 'active' : ''}`}>
               <PlusCircle size={16} /> Record
             </Link>
-            <Link to="/history" className={`sub-nav-link ${location.pathname === '/history' ? 'active' : ''}`}>
+            <Link to="/food/history" className={`sub-nav-link ${location.pathname === '/food/history' || location.pathname === '/history' ? 'active' : ''}`}>
               <List size={16} /> History
             </Link>
           </div>
@@ -317,11 +318,13 @@ function App() {
               <div className="loading-state">Loading your data...</div>
             ) : (
               <Routes>
-                <Route path="/" element={<FoodTracker onAddEntry={addEntry} />} />
+                <Route path="/" element={<TodoCalendar />} />
+                <Route path="/todos" element={<TodoCalendar />} />
+                <Route path="/food" element={<FoodTracker onAddEntry={addEntry} />} />
+                <Route path="/food/history" element={<HistoryPage entries={entries} onDeleteEntry={deleteEntry} onUpdateEntry={updateEntry} />} />
                 <Route path="/history" element={<HistoryPage entries={entries} onDeleteEntry={deleteEntry} onUpdateEntry={updateEntry} />} />
                 <Route path="/happiness" element={<HappinessTracker onAddEntry={addHappinessEntry} />} />
                 <Route path="/happiness/history" element={<HappinessHistory entries={happinessEntries} onDeleteEntry={deleteHappinessEntry} onUpdateEntry={updateHappinessEntry} />} />
-                <Route path="/todos" element={<TodoCalendar />} />
                 <Route path="/bookmarks" element={<BookmarksPage />} />
               </Routes>
             )}
