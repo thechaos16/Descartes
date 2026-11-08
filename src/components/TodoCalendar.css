@@ -332,6 +332,11 @@
   gap: 0.25rem;
 }
 
+.edit-btn:hover {
+  color: var(--accent-primary);
+  background: rgba(129, 140, 248, 0.1);
+}
+
 .cancel-btn:hover {
   color: #ef4444; /* red icon */
   background: rgba(239, 68, 68, 0.1);
@@ -345,6 +350,76 @@
 .delete-btn:hover {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.1);
+}
+
+/* Inline Edit Mode Styling */
+.todo-item.editing {
+  border-color: var(--accent-primary);
+  background: rgba(129, 140, 248, 0.04);
+  padding: 0.75rem;
+}
+
+.todo-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.todo-edit-input {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.todo-edit-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.todo-edit-date-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.todo-edit-date {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+  color-scheme: dark;
+  width: auto;
+  flex: 1;
+  max-width: 160px;
+}
+
+.todo-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.save-edit-btn {
+  color: var(--label-lunch);
+  background: rgba(52, 211, 153, 0.12);
+  padding: 0.35rem;
+}
+
+.save-edit-btn:hover:not(:disabled) {
+  color: #fff;
+  background: var(--label-lunch);
+}
+
+.cancel-edit-btn {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.35rem;
+}
+
+.cancel-edit-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 /* Mobile-specific responsive adjustments */

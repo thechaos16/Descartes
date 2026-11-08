@@ -10,7 +10,10 @@ import {
   Square, 
   Ban, 
   ListTodo,
-  CheckCircle2
+  CheckCircle2,
+  Pencil,
+  Check,
+  X
 } from 'lucide-react';
 import './TodoCalendar.css';
 
@@ -28,6 +31,16 @@ const TodoCalendar = () => {
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newTodo, setNewTodo] = useState('');
+
+  // Edit state
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDate, setEditDate] = useState('');
+
+  // Reset edit state when switching selected date
+  useEffect(() => {
+    setEditingId(null);
+  }, [selectedDate]);
 
   // Fetch todos when month changes
   useEffect(() => {
@@ -178,6 +191,40 @@ const TodoCalendar = () => {
     }
   };
 
+  const handleStartEdit = (todo) => {
+    setEditingId(todo.id);
+    setEditTitle(todo.title);
+    setEditDate(todo.date);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditTitle('');
+    setEditDate('');
+  };
+
+  const handleUpdateTodo = async (e, id) => {
+    e.preventDefault();
+    if (!editTitle.trim() || !editDate) return;
+
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({
+          title: editTitle.trim(),
+          date: editDate
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      setEditingId(null);
+      fetchTodos();
+    } catch (err) {
+      console.error('Error updating todo:', err.message);
+      alert('Failed to update todo.');
+    }
+  };
+
   // Month navigation helpers
   const handlePrevMonth = () => {
     setNavDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -320,52 +367,115 @@ const TodoCalendar = () => {
                 {selectedDateTodos.map((todo) => {
                   const isCompleted = todo.status === 'completed';
                   const isCancelled = todo.status === 'cancelled';
+                  const isEditing = editingId === todo.id;
                   
                   return (
                     <div 
                       key={todo.id} 
-                      className={`todo-item ${isCompleted ? 'completed' : ''} ${isCancelled ? 'cancelled' : ''}`}
+                      className={`todo-item ${isCompleted ? 'completed' : ''} ${isCancelled ? 'cancelled' : ''} ${isEditing ? 'editing' : ''}`}
                     >
-                      {/* Checkbox Icon / Done Toggle */}
-                      <button
-                        type="button"
-                        className="todo-action-btn check-btn"
-                        onClick={() => handleToggleStatus(todo.id, todo.status)}
-                        disabled={isCancelled}
-                        title={isCompleted ? "Mark Undone" : "Mark Done"}
-                      >
-                        {isCompleted ? (
-                          <CheckSquare size={20} color="var(--label-lunch)" />
-                        ) : (
-                          <Square size={20} color="var(--text-muted)" />
-                        )}
-                      </button>
-
-                      {/* Todo Text */}
-                      <span className="todo-title-text">{todo.title}</span>
-
-                      {/* Action buttons */}
-                      <div className="todo-actions">
-                        {/* Cancel Toggle */}
-                        <button
-                          type="button"
-                          className={`todo-action-btn cancel-btn ${isCancelled ? 'active' : ''}`}
-                          onClick={() => handleToggleCancel(todo.id, todo.status)}
-                          title={isCancelled ? "Restore Task" : "Cancel Task"}
+                      {isEditing ? (
+                        <form 
+                          className="todo-edit-form" 
+                          onSubmit={(e) => handleUpdateTodo(e, todo.id)}
                         >
-                          <Ban size={16} />
-                        </button>
-                        
-                        {/* Delete Button */}
-                        <button
-                          type="button"
-                          className="todo-action-btn delete-btn"
-                          onClick={() => handleDeleteTodo(todo.id)}
-                          title="Delete Task"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                          <input
+                            type="text"
+                            className="input-field todo-edit-input"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') handleCancelEdit();
+                            }}
+                            placeholder="Task description..."
+                            autoFocus
+                            required
+                          />
+                          <div className="todo-edit-bottom-row">
+                            <div className="todo-edit-date-group">
+                              <Calendar size={14} color="var(--text-secondary)" />
+                              <input
+                                type="date"
+                                className="input-field todo-edit-date"
+                                value={editDate}
+                                onChange={(e) => setEditDate(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <div className="todo-edit-actions">
+                              <button
+                                type="submit"
+                                className="todo-action-btn save-edit-btn"
+                                disabled={!editTitle.trim() || !editDate}
+                                title="Save Changes"
+                              >
+                                <Check size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                className="todo-action-btn cancel-edit-btn"
+                                onClick={handleCancelEdit}
+                                title="Cancel Edit"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        </form>
+                      ) : (
+                        <>
+                          {/* Checkbox Icon / Done Toggle */}
+                          <button
+                            type="button"
+                            className="todo-action-btn check-btn"
+                            onClick={() => handleToggleStatus(todo.id, todo.status)}
+                            disabled={isCancelled}
+                            title={isCompleted ? "Mark Undone" : "Mark Done"}
+                          >
+                            {isCompleted ? (
+                              <CheckSquare size={20} color="var(--label-lunch)" />
+                            ) : (
+                              <Square size={20} color="var(--text-muted)" />
+                            )}
+                          </button>
+
+                          {/* Todo Text */}
+                          <span className="todo-title-text">{todo.title}</span>
+
+                          {/* Action buttons */}
+                          <div className="todo-actions">
+                            {/* Edit Button */}
+                            <button
+                              type="button"
+                              className="todo-action-btn edit-btn"
+                              onClick={() => handleStartEdit(todo)}
+                              title="Edit Task"
+                            >
+                              <Pencil size={16} />
+                            </button>
+
+                            {/* Cancel Toggle */}
+                            <button
+                              type="button"
+                              className={`todo-action-btn cancel-btn ${isCancelled ? 'active' : ''}`}
+                              onClick={() => handleToggleCancel(todo.id, todo.status)}
+                              title={isCancelled ? "Restore Task" : "Cancel Task"}
+                            >
+                              <Ban size={16} />
+                            </button>
+                            
+                            {/* Delete Button */}
+                            <button
+                              type="button"
+                              className="todo-action-btn delete-btn"
+                              onClick={() => handleDeleteTodo(todo.id)}
+                              title="Delete Task"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   );
                 })}
